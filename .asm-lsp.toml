@@ -1,0 +1,8 @@
+[default_config]
+instruction_set = "riscv"
+assembler = "nasm"
+
+# [[project]]
+# path = "./src/arch/rvc"
+# assembler = "nasm"
+# instruction_set = "riscv"

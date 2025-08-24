@@ -1,0 +1,20 @@
+[package]
+name = "kappa"
+version = "0.1.0"
+edition = "2024"
+
+[[bin]]
+name = "kappa"
+path = "src/main.rs"
+test = false
+doctest = false
+bench = false
+
+[dependencies]
+macros = { path = "macros" }
+fdt = "0.1.5"
+riscv = "0.14"
+volatile = "0.6"
+
+[profile.release]
+panic = "abort"
