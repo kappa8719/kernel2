@@ -1,4 +1,3 @@
-use crate::println;
 use core::arch::asm;
 use fdt::Fdt;
 

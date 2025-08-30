@@ -15,6 +15,7 @@ macros = { path = "macros" }
 fdt = "0.1.5"
 riscv = "0.14"
 volatile = "0.6"
+bitflags = "2.9.3"
 
 [profile.release]
 panic = "abort"
