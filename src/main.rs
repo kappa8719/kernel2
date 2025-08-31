@@ -4,20 +4,26 @@
 #![feature(naked_functions_rustic_abi)]
 #![feature(range_into_bounds)]
 
+extern crate alloc;
+
 mod allocator;
 mod arch;
 mod dtb;
 mod exceptions;
+mod filesystem;
 mod memory;
 mod paging;
 mod proc;
+mod proc2;
 mod sbi;
 mod util;
 
 use crate::allocator::BuddyAllocator;
-use crate::proc::Proc;
+use crate::filesystem::virtio;
+use alloc::string::String;
+use alloc::vec;
 use core::arch::asm;
-use core::panic::{self, PanicInfo};
+use core::panic::PanicInfo;
 use riscv::register::stvec::Stvec;
 
 #[macro_export]
@@ -79,43 +85,6 @@ unsafe extern "C" fn boot() {
     }
 }
 
-static mut PROC_A: *mut Proc = core::ptr::null_mut();
-static mut PROC_B: *mut Proc = core::ptr::null_mut();
-
-fn delauy() {
-    for _ in 0..3000000 {
-        riscv::asm::nop();
-    }
-}
-
-fn proc_a_entry() {
-    println!("init proc a");
-
-    loop {
-        let a = unsafe { &mut *PROC_A };
-        let b = unsafe { &mut *PROC_B };
-
-        println!("switch -> b");
-
-        unsafe { Proc::switch_context(a, b) };
-        delauy();
-    }
-}
-
-fn proc_b_entry() {
-    println!("init proc b");
-
-    loop {
-        let a = unsafe { &mut *PROC_A };
-        let b = unsafe { &mut *PROC_B };
-
-        println!("switch -> a");
-
-        unsafe { Proc::switch_context(b, a) };
-        delauy();
-    }
-}
-
 unsafe fn kernel_main() -> ! {
     unsafe {
         println!("kernel is initializing");
@@ -161,15 +130,11 @@ unsafe fn kernel_main() -> ! {
             &mut *core::ptr::slice_from_raw_parts_mut(allocator_heap, required_heap),
         );
 
+        virtio::initialize();
+
         println!("kernel has been initialized");
         println!("kernel heap: {} available", kernel_heap_available());
-        println!("free: {:x?}", memory::get_region());
-
-        // println!("create proc a");
-        // PROC_A = Proc::create(proc_a_entry as usize);
-        // println!("create proc b");
-        // PROC_B = Proc::create(proc_b_entry as usize);
-        // proc_a_entry();
+        println!("global heap region {:x?}", memory::get_region());
 
         loop {
             riscv::asm::wfi();
