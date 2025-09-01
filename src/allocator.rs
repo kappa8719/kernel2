@@ -212,6 +212,7 @@ impl BuddyAllocator {
 
         let metadata = unsafe { &mut (*self.metadata)[block as usize] };
         *metadata = metadata.with_is_free_list(false);
+        self.remove_from_free_list(block as usize, *metadata);
 
         // split unused buddies and add them to free lists
         while pool > desired_order {
@@ -224,6 +225,7 @@ impl BuddyAllocator {
 
         *metadata = Metadata::new(true, false, pool as u8);
 
+        println!("block {block}");
         let addr = (block << MINIMUM_BLOCK.ilog2()) as usize;
         unsafe { self.region.addr.as_mut_ptr().add(addr) }
     }
@@ -303,7 +305,10 @@ unsafe impl GlobalAlloc for BuddyAllocator {
         let mut size = layout.size().next_power_of_two();
         if size < MINIMUM_BLOCK {
             size = MINIMUM_BLOCK;
+        } else if size > MAXIMUM_BLOCK {
+            panic!("alloc size exceeds MAXIMUM_BLOCK={MAXIMUM_BLOCK}");
         }
+        println!("allocating {size}");
         unsafe { self.allocate_unchecked(size) }
     }
 
